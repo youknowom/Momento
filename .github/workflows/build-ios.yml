@@ -1,0 +1,88 @@
+name: Build Unsigned iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'assets/**'
+      - 'app.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - '.github/workflows/build-ios.yml'
+
+jobs:
+  build:
+    name: Build Unsigned IPA (iOS)
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Verify TypeScript & Unit Tests
+        run: |
+          npx tsc --noEmit
+          npm test
+
+      - name: Setup Environment Variables
+        run: |
+          cat << 'EOF' > .env
+          EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=155400204245-9cptte63nakr5gum69rbr9a09ss2dici.apps.googleusercontent.com
+          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=155400204245-5ng092ij8ibr0hhmi71nprj6hm29acch.apps.googleusercontent.com
+          EXPO_PUBLIC_USE_DEV_FIXTURES=false
+          EXPO_PUBLIC_UPLOAD_FOLDER_NAME=Drive Photos Uploads
+          EOF
+
+      - name: Run Expo Prebuild (Generate native iOS project)
+        env:
+          EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: 155400204245-9cptte63nakr5gum69rbr9a09ss2dici.apps.googleusercontent.com
+          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: 155400204245-5ng092ij8ibr0hhmi71nprj6hm29acch.apps.googleusercontent.com
+          EXPO_PUBLIC_USE_DEV_FIXTURES: 'false'
+          EXPO_PUBLIC_UPLOAD_FOLDER_NAME: 'Drive Photos Uploads'
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Build Unsigned Native iOS Application
+        run: |
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -n 1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Building workspace: $WORKSPACE with scheme: $SCHEME"
+
+          xcodebuild build \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath ios/build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Package Unsigned IPA
+        run: |
+          mkdir -p Payload
+          # Copy the compiled .app into Payload directory
+          cp -R ios/build/Build/Products/Release-iphoneos/*.app Payload/
+          # Create .ipa archive (an IPA file is a zipped Payload folder)
+          zip -r -q Momento-unsigned.ipa Payload
+          ls -lh Momento-unsigned.ipa
+
+      - name: Upload Unsigned IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Momento-unsigned-ipa
+          path: Momento-unsigned.ipa
+          retention-days: 14

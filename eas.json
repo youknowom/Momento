@@ -1,0 +1,45 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_USE_DEV_FIXTURES": "false",
+        "EXPO_PUBLIC_UPLOAD_FOLDER_NAME": "Drive Photos Uploads",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "155400204245-5ng092ij8ibr0hhmi71nprj6hm29acch.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "155400204245-9cptte63nakr5gum69rbr9a09ss2dici.apps.googleusercontent.com"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "distribution": "store",
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_USE_DEV_FIXTURES": "false",
+        "EXPO_PUBLIC_UPLOAD_FOLDER_NAME": "Drive Photos Uploads",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "155400204245-5ng092ij8ibr0hhmi71nprj6hm29acch.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "155400204245-9cptte63nakr5gum69rbr9a09ss2dici.apps.googleusercontent.com"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {}
+    }
+  }
+}
